@@ -290,7 +290,7 @@ function M.open(targets, provider)
   end
 
   local buf = create_buffer()
-  local win = open_split(buf)
+  open_split(buf)
   local session = State.create_session(buf)
 
   -- Register targets
