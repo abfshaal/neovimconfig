@@ -101,6 +101,8 @@ local function render_buffer(buf)
     end
   end
 
+  vim.bo[buf].modifiable = false
+
   -- Auto-scroll if follow mode
   if session.follow_mode then
     local line_count = vim.api.nvim_buf_line_count(buf)
@@ -150,11 +152,13 @@ local function append_line(buf, tag, text)
 
   -- Trim buffer if over max_lines
   local max = Config.values.max_lines
-  local line_count = vim.api.nvim_buf_line_count(buf)
-  if line_count > max then
-    local overflow = line_count - max
+  local current_count = vim.api.nvim_buf_line_count(buf)
+  if current_count > max then
+    local overflow = current_count - max
     vim.api.nvim_buf_set_lines(buf, 0, overflow, false, {})
   end
+
+  vim.bo[buf].modifiable = false
 
   -- Auto-scroll if follow mode
   if session.follow_mode then

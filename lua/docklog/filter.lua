@@ -11,12 +11,13 @@ local LEVEL_SEVERITY = {
   FATAL = 6,
 }
 
-local LEVEL_PATTERN = "(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|CRITICAL|FATAL)"
+-- Ordered longest-first to avoid substring false matches (e.g. WARNING before WARN)
+local LEVEL_KEYWORDS = { "CRITICAL", "FATAL", "WARNING", "ERROR", "WARN", "INFO", "DEBUG", "TRACE" }
 
 ---@param text string
 ---@return string|nil level
 local function extract_level(text)
-  for level, _ in pairs(LEVEL_SEVERITY) do
+  for _, level in ipairs(LEVEL_KEYWORDS) do
     if text:find(level, 1, true) then
       return level
     end

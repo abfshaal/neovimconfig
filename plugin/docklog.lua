@@ -79,3 +79,18 @@ vim.api.nvim_create_user_command("DocklogStop", function()
     viewer.close(buf)
   end
 end, { desc = "Docklog: stop streams and close" })
+
+vim.api.nvim_create_user_command("DocklogAdd", function()
+  local state = require("docklog.state")
+  local picker = require("docklog.picker")
+  local buf = vim.api.nvim_get_current_buf()
+  local session = state.get_session(buf)
+  if session then
+    local provider_type = session.targets[1] and session.targets[1].provider_type
+    if provider_type == "docker" then
+      picker.add_to_buffer(buf, require("docklog.providers.docker"))
+    elseif provider_type == "kubernetes" then
+      picker.add_to_buffer(buf, require("docklog.providers.kubernetes"))
+    end
+  end
+end, { desc = "Docklog: add another target to current buffer" })
