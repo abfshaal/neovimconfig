@@ -57,6 +57,42 @@ describe("docklog.providers.docker", function()
     end)
   end)
 
+  describe("build_compose_list_cmd", function()
+    it("includes compose service filter", function()
+      local cmd = docker.build_compose_list_cmd()
+      assert.same({
+        "docker", "ps", "--filter", "label=com.docker.compose.service", "--format", "{{json .}}",
+      }, cmd)
+    end)
+  end)
+
+  describe("parse_compose_services", function()
+    it("groups containers by compose service", function()
+      local lines = {
+        '{"ID":"a1","Names":"proj-web-1","Status":"Up","Image":"nginx","Labels":"com.docker.compose.project=proj,com.docker.compose.service=web"}',
+        '{"ID":"a2","Names":"proj-web-2","Status":"Up","Image":"nginx","Labels":"com.docker.compose.project=proj,com.docker.compose.service=web"}',
+        '{"ID":"b1","Names":"proj-api-1","Status":"Up","Image":"node","Labels":"com.docker.compose.project=proj,com.docker.compose.service=api"}',
+      }
+      local services = docker.parse_compose_services(lines)
+      assert.is_not_nil(services["proj/web"])
+      assert.equals(2, #services["proj/web"].containers)
+      assert.equals("web", services["proj/web"].service)
+      assert.is_not_nil(services["proj/api"])
+      assert.equals(1, #services["proj/api"].containers)
+      assert.equals("api", services["proj/api"].service)
+    end)
+
+    it("skips containers without compose labels", function()
+      local lines = {
+        '{"ID":"x1","Names":"standalone","Status":"Up","Image":"redis","Labels":""}',
+      }
+      local services = docker.parse_compose_services(lines)
+      local count = 0
+      for _ in pairs(services) do count = count + 1 end
+      assert.equals(0, count)
+    end)
+  end)
+
   describe("get_tag", function()
     it("returns container name as tag", function()
       local target = { id = "abc", name = "my-container", status = "Up", image = "nginx" }

@@ -16,6 +16,12 @@ function M.setup(opts)
     { silent = true, desc = "Docklog: K8s pods" })
   vim.keymap.set("n", prefix .. km.namespace, "<cmd>DocklogKubeNs<cr>",
     { silent = true, desc = "Docklog: K8s namespace picker" })
+  vim.keymap.set("n", prefix .. km.compose, "<cmd>DocklogCompose<cr>",
+    { silent = true, desc = "Docklog: Docker Compose services" })
+  vim.keymap.set("n", prefix .. km.deployments, "<cmd>DocklogKubeDeploy<cr>",
+    { silent = true, desc = "Docklog: K8s deployments" })
+  vim.keymap.set("n", prefix .. km.label, "<cmd>DocklogKubeLabel<cr>",
+    { silent = true, desc = "Docklog: K8s pods by label" })
 end
 
 return M

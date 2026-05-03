@@ -21,8 +21,11 @@ local M = {}
 ---@field quit string
 ---@field add string
 ---@field docker string
+---@field compose string
 ---@field pods string
 ---@field namespace string
+---@field deployments string
+---@field label string
 
 ---@class docklog.Config
 ---@field max_lines number
@@ -68,8 +71,11 @@ M.values = {
     quit = "q",
     add = "a",
     docker = "d",
+    compose = "D",
     pods = "p",
     namespace = "n",
+    deployments = "e",
+    label = "L",
   },
 }
 

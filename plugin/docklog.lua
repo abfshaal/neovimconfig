@@ -15,6 +15,40 @@ vim.api.nvim_create_user_command("DocklogKubeNs", function()
   require("docklog.picker").k8s_namespaces()
 end, { desc = "Docklog: pick K8s namespace then pods" })
 
+vim.api.nvim_create_user_command("DocklogCompose", function()
+  require("docklog.picker").docker_compose()
+end, { desc = "Docklog: pick Docker Compose services and view logs" })
+
+vim.api.nvim_create_user_command("DocklogKubeDeploy", function()
+  require("docklog.picker").k8s_deployments()
+end, { desc = "Docklog: pick K8s deployment, auto-expand to pods" })
+
+vim.api.nvim_create_user_command("DocklogKubeLabel", function(opts)
+  if opts.args and opts.args ~= "" then
+    local k8s = require("docklog.providers.kubernetes")
+    local Config = require("docklog.config")
+    local ns = Config.values.k8s.namespace
+    local function do_query(namespace)
+      k8s.list_targets_by_label(namespace, opts.args, function(targets)
+        if #targets == 0 then
+          vim.notify("No pods match label: " .. opts.args, vim.log.levels.INFO)
+          return
+        end
+        require("docklog.viewer").open(targets, k8s)
+      end)
+    end
+    if ns then
+      do_query(ns)
+    else
+      k8s.get_current_namespace(function(current_ns)
+        do_query(current_ns)
+      end)
+    end
+  else
+    require("docklog.picker").k8s_label()
+  end
+end, { nargs = "?", desc = "Docklog: pick K8s pods by label selector" })
+
 vim.api.nvim_create_user_command("DocklogFollow", function()
   local state = require("docklog.state")
   local viewer = require("docklog.viewer")
