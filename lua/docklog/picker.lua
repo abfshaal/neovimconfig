@@ -31,7 +31,7 @@ function M.docker_containers()
         end,
       }),
       sorter = conf.generic_sorter({}),
-      attach_mappings = function(prompt_bufnr, map)
+      attach_mappings = function(prompt_bufnr, _)
         -- Enable multi-select with Tab
         actions.select_default:replace(function()
           local picker = action_state.get_current_picker(prompt_bufnr)
@@ -90,7 +90,7 @@ function M.k8s_pods(namespace)
           end,
         }),
         sorter = conf.generic_sorter({}),
-        attach_mappings = function(prompt_bufnr, map)
+        attach_mappings = function(prompt_bufnr, _)
           actions.select_default:replace(function()
             local picker = action_state.get_current_picker(prompt_bufnr)
             local selections = picker:get_multi_selection()
@@ -157,7 +157,7 @@ function M.k8s_namespaces()
         end,
       }),
       sorter = conf.generic_sorter({}),
-      attach_mappings = function(prompt_bufnr, map)
+      attach_mappings = function(prompt_bufnr, _)
         actions.select_default:replace(function()
           local entry = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
@@ -198,7 +198,7 @@ function M.add_to_buffer(buf, provider)
           end,
         }),
         sorter = conf.generic_sorter({}),
-        attach_mappings = function(prompt_bufnr, map)
+        attach_mappings = function(prompt_bufnr, _)
           actions.select_default:replace(function()
             local picker = action_state.get_current_picker(prompt_bufnr)
             local selections = picker:get_multi_selection()
@@ -249,7 +249,7 @@ function M.add_to_buffer(buf, provider)
             end,
           }),
           sorter = conf.generic_sorter({}),
-          attach_mappings = function(prompt_bufnr, map)
+          attach_mappings = function(prompt_bufnr, _)
             actions.select_default:replace(function()
               local picker = action_state.get_current_picker(prompt_bufnr)
               local selections = picker:get_multi_selection()
