@@ -128,3 +128,7 @@ vim.api.nvim_create_user_command("DocklogAdd", function()
     end
   end
 end, { desc = "Docklog: add another target to current buffer" })
+
+vim.api.nvim_create_user_command("DocklogSessions", function()
+  require("docklog.picker").docklog_sessions()
+end, { desc = "Docklog: pick from active log sessions" })

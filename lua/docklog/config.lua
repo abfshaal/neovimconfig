@@ -26,6 +26,7 @@ local M = {}
 ---@field namespace string
 ---@field deployments string
 ---@field label string
+---@field sessions string
 
 ---@class docklog.Config
 ---@field max_lines number
@@ -76,6 +77,7 @@ M.values = {
     namespace = "n",
     deployments = "e",
     label = "L",
+    sessions = "s",
   },
 }
 

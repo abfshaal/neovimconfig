@@ -7,6 +7,7 @@ local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 
 local Viewer = require("docklog.viewer")
+local State = require("docklog.state")
 
 ---Create a Telescope picker for Docker containers.
 function M.docker_containers()
@@ -481,6 +482,91 @@ function M.add_to_buffer(buf, provider)
       end)
     end
   end
+end
+
+---Create a Telescope picker for active docklog sessions.
+function M.docklog_sessions()
+  local sessions = State.all_sessions()
+
+  -- Build list of session entries
+  local entries = {}
+  for buf_id, session in pairs(sessions) do
+    if vim.api.nvim_buf_is_valid(buf_id) then
+      -- Determine status
+      local streaming = false
+      for _ in pairs(session.jobs) do
+        streaming = true
+        break
+      end
+      local status = streaming and "STREAMING" or "ENDED"
+
+      -- Build name from targets
+      local names = {}
+      for _, target in ipairs(session.targets) do
+        names[#names + 1] = target.tag
+      end
+      local buf_name = table.concat(names, "+")
+
+      entries[#entries + 1] = {
+        buf_id = buf_id,
+        name = buf_name,
+        status = status,
+        target_count = #session.targets,
+      }
+    end
+  end
+
+  if #entries == 0 then
+    vim.notify("No active docklog sessions", vim.log.levels.INFO)
+    return
+  end
+
+  pickers.new({}, {
+    prompt_title = "Docklog Sessions",
+    finder = finders.new_table({
+      results = entries,
+      entry_maker = function(entry)
+        return {
+          value = entry,
+          display = string.format("docklog://%-30s [%-9s]  %d target(s)",
+            entry.name, entry.status, entry.target_count),
+          ordinal = entry.name,
+        }
+      end,
+    }),
+    sorter = conf.generic_sorter({}),
+    attach_mappings = function(prompt_bufnr, map)
+      actions.select_default:replace(function()
+        local entry = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        if entry then
+          vim.api.nvim_win_set_buf(0, entry.value.buf_id)
+        end
+      end)
+
+      -- Vertical split
+      map("i", "<C-v>", function()
+        local entry = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        if entry then
+          vim.cmd("vsplit")
+          vim.api.nvim_win_set_buf(0, entry.value.buf_id)
+        end
+      end)
+
+      -- Horizontal split
+      map("i", "<C-x>", function()
+        local entry = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        if entry then
+          vim.cmd("split")
+          vim.api.nvim_win_set_buf(0, entry.value.buf_id)
+        end
+      end)
+
+      return true
+    end,
+  }):find()
 end
 
 return M

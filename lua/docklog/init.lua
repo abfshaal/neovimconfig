@@ -22,6 +22,8 @@ function M.setup(opts)
     { silent = true, desc = "Docklog: K8s deployments" })
   vim.keymap.set("n", prefix .. km.label, "<cmd>DocklogKubeLabel<cr>",
     { silent = true, desc = "Docklog: K8s pods by label" })
+  vim.keymap.set("n", prefix .. km.sessions, "<cmd>DocklogSessions<cr>",
+    { silent = true, desc = "Docklog: active sessions picker" })
 end
 
 return M
