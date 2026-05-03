@@ -381,8 +381,20 @@ function M.add_to_buffer(buf, provider)
   if provider_type == "docker" then
     local docker = require("docklog.providers.docker")
     docker.list_targets(function(targets)
+      -- Filter out already-attached targets
+      local session = State.get_session(buf)
+      if session then
+        local existing = {}
+        for _, t in ipairs(session.targets) do
+          existing[t.name] = true
+        end
+        targets = vim.tbl_filter(function(target)
+          return not existing[target.name]
+        end, targets)
+      end
+
       if #targets == 0 then
-        vim.notify("No running Docker containers found", vim.log.levels.INFO)
+        vim.notify("No additional Docker containers available", vim.log.levels.INFO)
         return
       end
 
@@ -428,8 +440,20 @@ function M.add_to_buffer(buf, provider)
 
     local function do_add(target_ns)
       k8s.list_targets(target_ns, function(targets)
+        -- Filter out already-attached targets
+        local session = State.get_session(buf)
+        if session then
+          local existing = {}
+          for _, t in ipairs(session.targets) do
+            existing[t.name] = true
+          end
+          targets = vim.tbl_filter(function(target)
+            return not existing[target.name]
+          end, targets)
+        end
+
         if #targets == 0 then
-          vim.notify("No pods found in namespace: " .. target_ns, vim.log.levels.INFO)
+          vim.notify("No additional pods available in namespace: " .. target_ns, vim.log.levels.INFO)
           return
         end
 
@@ -492,13 +516,15 @@ function M.docklog_sessions()
   local entries = {}
   for buf_id, session in pairs(sessions) do
     if vim.api.nvim_buf_is_valid(buf_id) then
-      -- Determine status
-      local streaming = false
-      for _ in pairs(session.jobs) do
-        streaming = true
-        break
+      -- Determine status from target ended flags
+      local all_ended = true
+      for _, target in ipairs(session.targets) do
+        if not target.ended then
+          all_ended = false
+          break
+        end
       end
-      local status = streaming and "STREAMING" or "ENDED"
+      local status = all_ended and "ENDED" or "STREAMING"
 
       -- Build name from targets
       local names = {}
@@ -544,25 +570,29 @@ function M.docklog_sessions()
         end
       end)
 
-      -- Vertical split
-      map("i", "<C-v>", function()
+      -- Vertical split (insert + normal mode)
+      local function vsplit_action()
         local entry = action_state.get_selected_entry()
         actions.close(prompt_bufnr)
         if entry then
           vim.cmd("vsplit")
           vim.api.nvim_win_set_buf(0, entry.value.buf_id)
         end
-      end)
+      end
+      map("i", "<C-v>", vsplit_action)
+      map("n", "<C-v>", vsplit_action)
 
-      -- Horizontal split
-      map("i", "<C-x>", function()
+      -- Horizontal split (insert + normal mode)
+      local function split_action()
         local entry = action_state.get_selected_entry()
         actions.close(prompt_bufnr)
         if entry then
           vim.cmd("split")
           vim.api.nvim_win_set_buf(0, entry.value.buf_id)
         end
-      end)
+      end
+      map("i", "<C-x>", split_action)
+      map("n", "<C-x>", split_action)
 
       return true
     end,

@@ -454,7 +454,7 @@ end
 ---Stop jobs, destroy session, and wipe the buffer permanently.
 ---@param buf number
 function M.close(buf)
-  M.stop_jobs(buf)
+  M.stop_jobs(buf)  -- Stop immediately; BufWipeout autocmd also calls this as a safety net
   if vim.api.nvim_buf_is_valid(buf) then
     vim.api.nvim_buf_delete(buf, { force = true })
   end
