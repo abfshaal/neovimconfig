@@ -8,13 +8,39 @@ local Highlights = require("docklog.highlights")
 ---Create a scratch buffer for log viewing.
 ---@return number buf
 local function create_buffer()
-  local buf = vim.api.nvim_create_buf(false, true)
+  local buf = vim.api.nvim_create_buf(true, true)
   vim.bo[buf].buftype = "nofile"
-  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].bufhidden = "hide"
   vim.bo[buf].swapfile = false
   vim.bo[buf].modifiable = true
   vim.bo[buf].filetype = "docklog"
   return buf
+end
+
+---Build a docklog:// buffer name from session targets.
+---@param targets table[]
+---@param provider table
+---@return string
+local function build_buffer_name(targets, provider)
+  local names = {}
+  for _, target in ipairs(targets) do
+    names[#names + 1] = provider.get_tag(target)
+  end
+  return "docklog://" .. table.concat(names, "+")
+end
+
+---Update the buffer name to reflect current session targets.
+---@param buf number
+local function update_buffer_name(buf)
+  local session = State.get_session(buf)
+  if not session then return end
+  local names = {}
+  for _, target in ipairs(session.targets) do
+    names[#names + 1] = target.tag
+  end
+  local name = "docklog://" .. table.concat(names, "+")
+  -- pcall because name might conflict with existing buffer
+  pcall(vim.api.nvim_buf_set_name, buf, name)
 end
 
 ---Open a split window for the buffer.
@@ -308,6 +334,10 @@ function M.open(targets, provider)
     }
   end
 
+  -- Set buffer name
+  local buf_name = build_buffer_name(targets, provider)
+  pcall(vim.api.nvim_buf_set_name, buf, buf_name)
+
   -- Set keymaps
   set_keymaps(buf, provider)
 
@@ -348,6 +378,7 @@ function M.add_target(buf, target, provider)
   }
 
   update_winbar(buf)
+  update_buffer_name(buf)
   start_job(buf, target, provider)
 end
 
@@ -420,17 +451,12 @@ function M.stop_jobs(buf)
   session.jobs = {}
 end
 
----Stop jobs and close the buffer.
+---Stop jobs, destroy session, and wipe the buffer permanently.
 ---@param buf number
 function M.close(buf)
   M.stop_jobs(buf)
   if vim.api.nvim_buf_is_valid(buf) then
-    -- Close windows showing this buffer
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-      if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == buf then
-        vim.api.nvim_win_close(win, true)
-      end
-    end
+    vim.api.nvim_buf_delete(buf, { force = true })
   end
 end
 
