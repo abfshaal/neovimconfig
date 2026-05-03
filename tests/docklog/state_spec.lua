@@ -1,0 +1,66 @@
+describe("docklog.state", function()
+  local state
+
+  before_each(function()
+    package.loaded["docklog.state"] = nil
+    package.loaded["docklog.config"] = nil
+    require("docklog.config").setup({ max_lines = 5 })
+    state = require("docklog.state")
+  end)
+
+  describe("create_session", function()
+    it("creates a session for a buffer", function()
+      local session = state.create_session(1)
+      assert.is_not_nil(session)
+      assert.equals(1, session.buf_id)
+      assert.is_true(session.follow_mode)
+      assert.same({}, session.jobs)
+      assert.same({}, session.raw_lines)
+      assert.same({}, session.targets)
+      assert.is_nil(session.filters.keyword)
+      assert.is_nil(session.filters.level)
+    end)
+  end)
+
+  describe("get_session", function()
+    it("returns nil for unknown buffer", function()
+      assert.is_nil(state.get_session(999))
+    end)
+
+    it("returns session after creation", function()
+      state.create_session(42)
+      local session = state.get_session(42)
+      assert.equals(42, session.buf_id)
+    end)
+  end)
+
+  describe("add_line", function()
+    it("stores raw line with tag and text", function()
+      state.create_session(1)
+      state.add_line(1, "api-pod", "INFO request received")
+      local session = state.get_session(1)
+      assert.equals(1, #session.raw_lines)
+      assert.equals("api-pod", session.raw_lines[1].tag)
+      assert.equals("INFO request received", session.raw_lines[1].text)
+    end)
+
+    it("enforces max_lines by dropping oldest", function()
+      state.create_session(1)
+      for i = 1, 7 do
+        state.add_line(1, "pod", "line " .. i)
+      end
+      local session = state.get_session(1)
+      assert.equals(5, #session.raw_lines)
+      assert.equals("line 3", session.raw_lines[1].text)
+      assert.equals("line 7", session.raw_lines[5].text)
+    end)
+  end)
+
+  describe("remove_session", function()
+    it("removes session for buffer", function()
+      state.create_session(1)
+      state.remove_session(1)
+      assert.is_nil(state.get_session(1))
+    end)
+  end)
+end)
