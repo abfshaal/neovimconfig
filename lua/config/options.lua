@@ -5,3 +5,6 @@
 -- Prioritize Tree-sitter over LSP semantic highlighting
 vim.g.semantic_tokens_enabled = false
 vim.highlight.priorities.semantic_tokens = 95
+
+-- Increase timeout for key sequences (default 300ms from LazyVim is too fast for <C-f> prefix)
+vim.opt.timeoutlen = 1000

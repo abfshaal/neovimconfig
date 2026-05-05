@@ -117,6 +117,29 @@ return {
 
       -- Terminate debugging session
       vim.keymap.set("n", "<leader>dT", dap.terminate, { desc = "Debug: Terminate session" })
+
+      -- <C-f> prefix variants
+      vim.keymap.set("n", "<C-f>do", dap.step_over, { desc = "Debug: Step over (C-f)" })
+      vim.keymap.set("n", "<C-f>di", dap.step_into, { desc = "Debug: Step into (C-f)" })
+      vim.keymap.set("n", "<C-f>dO", dap.step_out, { desc = "Debug: Step out (C-f)" })
+      vim.keymap.set("n", "<C-f>db", dap.toggle_breakpoint, { desc = "Debug: Toggle breakpoint (C-f)" })
+      vim.keymap.set("n", "<C-f>dB", function()
+        dap.set_breakpoint(vim.fn.input("Breakpoint condition: "))
+      end, { desc = "Debug: Set conditional breakpoint (C-f)" })
+      vim.keymap.set("n", "<C-f>dR", dap.repl.open, { desc = "Debug: Open REPL (C-f)" })
+      vim.keymap.set("n", "<C-f>dl", dap.run_last, { desc = "Debug: Run last configuration (C-f)" })
+      vim.keymap.set("n", "<C-f>du", dapui.toggle, { desc = "Debug UI: Toggle (C-f)" })
+      vim.keymap.set("n", "<C-f>dU", dapui.open, { desc = "Debug UI: Open (C-f)" })
+      vim.keymap.set("n", "<C-f>dx", dapui.close, { desc = "Debug UI: Close (C-f)" })
+      vim.keymap.set("n", "<C-f>de", function() dapui.eval() end, { desc = "Debug UI: Evaluate (C-f)" })
+      vim.keymap.set("v", "<C-f>de", function() dapui.eval() end, { desc = "Debug UI: Evaluate selection (C-f)" })
+      vim.keymap.set("n", "<C-f>ds", function() dapui.float_element("scopes") end, { desc = "Debug UI: Float scopes (C-f)" })
+      vim.keymap.set("n", "<C-f>dk", function() dapui.float_element("stacks") end, { desc = "Debug UI: Float stacks (C-f)" })
+      vim.keymap.set("n", "<C-f>dw", function() dapui.float_element("watches") end, { desc = "Debug UI: Float watches (C-f)" })
+      vim.keymap.set("n", "<C-f>dp", function() dapui.float_element("breakpoints") end, { desc = "Debug UI: Float breakpoints (C-f)" })
+      vim.keymap.set("n", "<C-f>dt", function() dapui.float_element("console") end, { desc = "Debug UI: Float console (C-f)" })
+      vim.keymap.set("n", "<C-f>df", function() dapui.float_element("repl") end, { desc = "Debug UI: Float REPL (C-f)" })
+      vim.keymap.set("n", "<C-f>dT", dap.terminate, { desc = "Debug: Terminate session (C-f)" })
     end,
   },
   {
@@ -166,6 +189,20 @@ return {
         cwd = "${workspaceFolder}",
       })
 
+      table.insert(require("dap").configurations.python, {
+        type = "python",
+        request = "launch",
+        name = "FastAPI Server (workflowvibe)",
+        module = "uvicorn",
+        args = {
+          "src.main:app",
+          "--reload",
+        },
+        console = "integratedTerminal",
+        justMyCode = false,
+        cwd = "/Users/abdulraheem.shaal1/workflowvibe/backend",
+      })
+
       -- Additional Python debugging keymaps
       vim.keymap.set("n", "<leader>dm", function()
         dap_python.test_method()
@@ -173,6 +210,10 @@ return {
       vim.keymap.set("n", "<leader>dc", function()
         dap_python.test_class()
       end, { desc = "Debug Python test class" })
+
+      -- <C-f> prefix variants
+      vim.keymap.set("n", "<C-f>dm", function() dap_python.test_method() end, { desc = "Debug Python test method (C-f)" })
+      vim.keymap.set("n", "<C-f>dc", function() dap_python.test_class() end, { desc = "Debug Python test class (C-f)" })
     end,
   },
 }

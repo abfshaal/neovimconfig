@@ -35,6 +35,22 @@ return {
         end,
         desc = "Navbuddy: Parents",
       },
+
+      -- <C-f> prefix variants
+      {
+        "<C-f>vn",
+        function()
+          require("nvim-navbuddy").open()
+        end,
+        desc = "Code Navigator (C-f)",
+      },
+      {
+        "<C-f>vN",
+        function()
+          require("nvim-navbuddy").open(require("nvim-navbuddy").api).parents()
+        end,
+        desc = "Navbuddy: Parents (C-f)",
+      },
     },
     opts = {
       window = { border = "rounded" },

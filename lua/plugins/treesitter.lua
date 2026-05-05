@@ -1,3 +1,4 @@
+-- Test comment added by Claude to verify edit permissions
 return {
   {
     "nvim-treesitter/nvim-treesitter",
@@ -22,8 +23,9 @@ return {
       highlight = {
         enable = true,
         additional_vim_regex_highlighting = false,
-        disable = function(lang, buf)
-          return false
+        disable = function(lang)
+          -- Temporarily skip vimscript to avoid parser/query mismatch errors
+          return lang == "vim"
         end,
       },
       folds = { enable = true },

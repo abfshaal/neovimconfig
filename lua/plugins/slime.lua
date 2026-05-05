@@ -31,6 +31,10 @@ return {
     vim.keymap.set("n", "<leader>cb", create_cell_below, { desc = "Create cell below", buffer = true })
     vim.keymap.set("n", "]j", go_to_next_cell, { desc = "Go to next cell", buffer = true })
     vim.keymap.set("n", "[j", go_to_prev_cell, { desc = "Go to previous cell", buffer = true })
+
+    -- <C-f> prefix variants
+    vim.keymap.set("n", "<C-f>cA", create_cell_above, { desc = "Create cell above (C-f)", buffer = true })
+    vim.keymap.set("n", "<C-f>cb", create_cell_below, { desc = "Create cell below (C-f)", buffer = true })
   end,
   ft = { "python" },
   keys = {

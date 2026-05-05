@@ -79,5 +79,15 @@ return {
     vim.keymap.set("n", "<leader>to", function() neotest.output.open({ enter = true }) end, { desc = "Open test output" })
     vim.keymap.set("n", "<leader>tt", function() neotest.summary.toggle() end, { desc = "Toggle test summary" })
     vim.keymap.set("n", "<leader>tp", function() neotest.output_panel.toggle() end, { desc = "Toggle output panel" })
+
+    -- <C-f> prefix variants
+    vim.keymap.set("n", "<C-f>tr", function() neotest.run.run() end, { desc = "Run nearest test (C-f)" })
+    vim.keymap.set("n", "<C-f>tf", function() neotest.run.run(vim.fn.expand("%")) end, { desc = "Run current file tests (C-f)" })
+    vim.keymap.set("n", "<C-f>td", function() neotest.run.run({strategy = "dap"}) end, { desc = "Debug nearest test (C-f)" })
+    vim.keymap.set("n", "<C-f>ts", function() neotest.run.stop() end, { desc = "Stop test (C-f)" })
+    vim.keymap.set("n", "<C-f>ta", function() neotest.run.attach() end, { desc = "Attach to test (C-f)" })
+    vim.keymap.set("n", "<C-f>to", function() neotest.output.open({ enter = true }) end, { desc = "Open test output (C-f)" })
+    vim.keymap.set("n", "<C-f>tt", function() neotest.summary.toggle() end, { desc = "Toggle test summary (C-f)" })
+    vim.keymap.set("n", "<C-f>tp", function() neotest.output_panel.toggle() end, { desc = "Toggle output panel (C-f)" })
   end,
 }

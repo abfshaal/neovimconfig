@@ -3,6 +3,11 @@ return {
     "neovim/nvim-lspconfig",
     opts = {
       servers = {
+        ["*"] = {
+          keys = {
+            { "K", false },
+          },
+        },
         pyright = {
           settings = {
             python = {
@@ -25,9 +30,5 @@ return {
         },
       },
     },
-    init = function()
-      local keys = require("lazyvim.plugins.lsp.keymaps").get()
-      keys[#keys + 1] = { "K", false }
-    end,
   },
 }

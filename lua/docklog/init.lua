@@ -24,6 +24,10 @@ function M.setup(opts)
     { silent = true, desc = "Docklog: K8s pods by label" })
   vim.keymap.set("n", prefix .. km.sessions, "<cmd>DocklogSessions<cr>",
     { silent = true, desc = "Docklog: active sessions picker" })
+
+  -- Standalone shortcut (no prefix) for fast access
+  vim.keymap.set("n", "<C-,>", "<cmd>DocklogSessions<cr>",
+    { silent = true, desc = "Docklog: active sessions picker" })
 end
 
 return M

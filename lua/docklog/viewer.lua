@@ -148,6 +148,9 @@ local function append_line(buf, tag, text)
   local session = State.get_session(buf)
   if not session then return end
 
+  -- Skip buffer writes when paused — raw_lines still accumulate in State
+  if not session.follow_mode then return end
+
   -- Check filter
   if not Filter.matches(text, session.filters) then
     return
@@ -391,13 +394,8 @@ function M.toggle_follow(buf)
   session.follow_mode = not session.follow_mode
 
   if session.follow_mode then
-    -- Jump to bottom
-    local line_count = vim.api.nvim_buf_line_count(buf)
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-      if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == buf then
-        vim.api.nvim_win_set_cursor(win, { line_count, 0 })
-      end
-    end
+    -- Resuming: re-render from raw_lines to catch up on missed lines
+    render_buffer(buf)
   end
 
   update_winbar(buf)

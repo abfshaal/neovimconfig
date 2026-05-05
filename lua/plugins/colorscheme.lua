@@ -1,5 +1,13 @@
 return {
   {
+    "folke/snacks.nvim",
+    opts = {
+      explorer = {
+        replace_netrw = false,
+      },
+    },
+  },
+  {
     "folke/tokyonight.nvim",
     lazy = false,
     priority = 1000,

@@ -10,7 +10,8 @@ return {
     -- Server Configuration
     port_range = { min = 10000, max = 65535 },
     auto_start = true,
-    log_level = "debug", -- "trace", "debug", "info", "warn", "error"
+    log_level = "debug", -- Options: "trace", "debug", "info", "warn", "error"
+    max_retries = 3, -- NEW: Testing edit feature
     terminal_cmd = nil, -- Custom terminal command (default: "claude")
     -- For local installations: "~/.claude/local/claude"
     -- For native binary: use output from 'which claude'
@@ -46,7 +47,7 @@ return {
       floating = true,
       auto_close_on_accept = true,
       open_in_current_tab = true,
-      keep_terminal_focus = false, -- If true, moves focus back to terminal after diff opens
+      keep_terminal_focus = true, -- If true, moves focus back to terminal after diff opens
       test_diff_feature = true, -- Testing the diff feature
     },
   },

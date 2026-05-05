@@ -20,5 +20,9 @@ return {
   keys = {
     { "<leader>vs", "<cmd>VenvSelect<cr>" },
     { "<leader>vc", "<cmd>VenvSelectCached<cr>" },
+
+    -- <C-f> prefix variants
+    { "<C-f>vs", "<cmd>VenvSelect<cr>", desc = "VenvSelect (C-f)" },
+    { "<C-f>vc", "<cmd>VenvSelectCached<cr>", desc = "VenvSelectCached (C-f)" },
   },
 }
