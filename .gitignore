@@ -5,4 +5,8 @@ debug
 .repro
 foo.*
 *.log
+.nvimlog
+.env
+.env.*
+.claude/settings.local.json
 data
