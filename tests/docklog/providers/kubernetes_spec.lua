@@ -13,7 +13,13 @@ describe("docklog.providers.kubernetes", function()
       local target = { name = "api-pod", namespace = "default" }
       local cmd = k8s.build_log_cmd(target)
       assert.same({
-        "kubectl", "logs", "-f", "--tail=100", "-n", "default", "api-pod",
+        "kubectl",
+        "logs",
+        "-f",
+        "--tail=100",
+        "-n",
+        "default",
+        "api-pod",
       }, cmd)
     end)
 
@@ -21,7 +27,15 @@ describe("docklog.providers.kubernetes", function()
       local target = { name = "api-pod", namespace = "default", container = "sidecar" }
       local cmd = k8s.build_log_cmd(target)
       assert.same({
-        "kubectl", "logs", "-f", "--tail=100", "-n", "default", "api-pod", "-c", "sidecar",
+        "kubectl",
+        "logs",
+        "-f",
+        "--tail=100",
+        "-n",
+        "default",
+        "api-pod",
+        "-c",
+        "sidecar",
       }, cmd)
     end)
 
@@ -30,7 +44,13 @@ describe("docklog.providers.kubernetes", function()
       local target = { name = "api-pod", namespace = "default" }
       local cmd = k8s.build_log_cmd(target)
       assert.same({
-        "kubectl", "logs", "-f", "--tail=200", "-n", "default", "api-pod",
+        "kubectl",
+        "logs",
+        "-f",
+        "--tail=200",
+        "-n",
+        "default",
+        "api-pod",
       }, cmd)
     end)
 
@@ -39,9 +59,60 @@ describe("docklog.providers.kubernetes", function()
       local target = { name = "api-pod", namespace = "default" }
       local cmd = k8s.build_log_cmd(target)
       assert.same({
-        "kubectl", "--kubeconfig", "/tmp/kubeconfig",
-        "logs", "-f", "--tail=100", "-n", "default", "api-pod",
+        "kubectl",
+        "--kubeconfig",
+        "/tmp/kubeconfig",
+        "logs",
+        "-f",
+        "--tail=100",
+        "-n",
+        "default",
+        "api-pod",
       }, cmd)
+    end)
+  end)
+
+  describe("build_pod_list_cmd", function()
+    it("uses compact jsonpath output for pod lists", function()
+      local cmd = k8s.build_pod_list_cmd("default")
+      assert.equals("kubectl", cmd[1])
+      assert.same({ "get", "pods", "-n", "default", "-o" }, { cmd[2], cmd[3], cmd[4], cmd[5], cmd[6] })
+      assert.matches("^jsonpath=", cmd[7])
+    end)
+
+    it("adds label selector when provided", function()
+      local cmd = k8s.build_pod_list_cmd("prod", "app=api")
+      assert.same({ "kubectl", "get", "pods", "-n", "prod", "-l", "app=api", "-o" }, {
+        cmd[1],
+        cmd[2],
+        cmd[3],
+        cmd[4],
+        cmd[5],
+        cmd[6],
+        cmd[7],
+        cmd[8],
+      })
+      assert.matches("^jsonpath=", cmd[9])
+    end)
+  end)
+
+  describe("parse_pods_lines", function()
+    it("parses compact kubectl pod output into targets", function()
+      local targets = k8s.parse_pods_lines({ "api-pod\tdefault\tRunning\tapp," }, "default")
+      assert.equals(1, #targets)
+      assert.equals("api-pod", targets[1].name)
+      assert.equals("default", targets[1].namespace)
+      assert.equals("Running", targets[1].status)
+      assert.is_nil(targets[1].container)
+    end)
+
+    it("expands multi-container compact pod output", function()
+      local targets = k8s.parse_pods_lines({ "web-pod\tprod\tRunning\tapp,sidecar," }, "prod")
+      assert.equals(2, #targets)
+      assert.equals("web-pod", targets[1].name)
+      assert.equals("app", targets[1].container)
+      assert.equals("web-pod", targets[2].name)
+      assert.equals("sidecar", targets[2].container)
     end)
   end)
 

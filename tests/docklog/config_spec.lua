@@ -12,6 +12,7 @@ describe("docklog.config", function()
     assert.equals(100, config.values.tail_lines)
     assert.equals("below", config.values.ui.split_direction)
     assert.equals(15, config.values.ui.split_size)
+    assert.equals(30000, config.values.k8s.pod_cache_ttl_ms)
     assert.equals("<C-f>l", config.values.keymaps.prefix)
   end)
 

@@ -12,6 +12,54 @@ local function base_cmd()
   return cmd
 end
 
+local pod_cache = {}
+
+local PODS_JSONPATH =
+  [[jsonpath={range .items[*]}{.metadata.name}{"\t"}{.metadata.namespace}{"\t"}{.status.phase}{"\t"}{range .spec.containers[*]}{.name}{","}{end}{"\n"}{end}]]
+
+local function now_ms()
+  return (vim.uv or vim.loop).now()
+end
+
+local function cache_key(namespace, label_selector)
+  local kubeconfig = Config.values.k8s.kubeconfig or vim.env.KUBECONFIG or ""
+  return table.concat({ kubeconfig, namespace, label_selector or "" }, "\0")
+end
+
+local function cache_ttl_ms()
+  return Config.values.k8s.pod_cache_ttl_ms or 0
+end
+
+local function copy_targets(targets)
+  return vim.deepcopy(targets)
+end
+
+local function get_cached_targets(namespace, label_selector)
+  local ttl = cache_ttl_ms()
+  if ttl <= 0 then
+    return nil
+  end
+
+  local cached = pod_cache[cache_key(namespace, label_selector)]
+  if not cached or (now_ms() - cached.time) > ttl then
+    return nil
+  end
+
+  return copy_targets(cached.targets)
+end
+
+local function set_cached_targets(namespace, label_selector, targets)
+  local ttl = cache_ttl_ms()
+  if ttl <= 0 then
+    return
+  end
+
+  pod_cache[cache_key(namespace, label_selector)] = {
+    time = now_ms(),
+    targets = copy_targets(targets),
+  }
+end
+
 ---@param target { name: string, namespace: string, container?: string }
 ---@return string[]
 function M.build_log_cmd(target)
@@ -29,6 +77,66 @@ function M.build_log_cmd(target)
   end
 
   return cmd
+end
+
+---@param namespace string
+---@param label_selector? string
+---@return string[]
+function M.build_pod_list_cmd(namespace, label_selector)
+  local cmd = base_cmd()
+  cmd[#cmd + 1] = "get"
+  cmd[#cmd + 1] = "pods"
+  cmd[#cmd + 1] = "-n"
+  cmd[#cmd + 1] = namespace
+  if label_selector and label_selector ~= "" then
+    cmd[#cmd + 1] = "-l"
+    cmd[#cmd + 1] = label_selector
+  end
+  cmd[#cmd + 1] = "-o"
+  cmd[#cmd + 1] = PODS_JSONPATH
+  return cmd
+end
+
+---@param lines string[]
+---@param namespace string
+---@return table[]
+function M.parse_pods_lines(lines, namespace)
+  local targets = {}
+
+  for _, line in ipairs(lines) do
+    if line ~= "" then
+      local name, ns, phase, containers_str = line:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t?(.*)$")
+      if name and name ~= "" then
+        ns = ns ~= "" and ns or namespace
+        phase = phase ~= "" and phase or "Unknown"
+
+        local containers = {}
+        for container in tostring(containers_str or ""):gmatch("([^,]+)") do
+          containers[#containers + 1] = container
+        end
+
+        if #containers <= 1 then
+          targets[#targets + 1] = {
+            name = name,
+            namespace = ns,
+            status = phase,
+            container = nil,
+          }
+        else
+          for _, container in ipairs(containers) do
+            targets[#targets + 1] = {
+              name = name,
+              namespace = ns,
+              status = phase,
+              container = container,
+            }
+          end
+        end
+      end
+    end
+  end
+
+  return targets
 end
 
 ---@param json_str string
@@ -89,14 +197,15 @@ end
 ---@param namespace string
 ---@param callback fun(targets: table[])
 function M.list_targets(namespace, callback)
-  local cmd = base_cmd()
-  cmd[#cmd + 1] = "get"
-  cmd[#cmd + 1] = "pods"
-  cmd[#cmd + 1] = "-n"
-  cmd[#cmd + 1] = namespace
-  cmd[#cmd + 1] = "-o"
-  cmd[#cmd + 1] = "json"
+  local cached = get_cached_targets(namespace)
+  if cached then
+    vim.schedule(function()
+      callback(cached)
+    end)
+    return
+  end
 
+  local cmd = M.build_pod_list_cmd(namespace)
   local stdout_chunks = {}
 
   vim.fn.jobstart(cmd, {
@@ -115,8 +224,9 @@ function M.list_targets(namespace, callback)
           callback({})
           return
         end
-        local json_str = table.concat(stdout_chunks, "\n")
-        callback(M.parse_pods_json(json_str, namespace))
+        local targets = M.parse_pods_lines(stdout_chunks, namespace)
+        set_cached_targets(namespace, nil, targets)
+        callback(targets)
       end)
     end,
   })
@@ -263,16 +373,15 @@ end
 ---@param label_selector string e.g. "app=my-service"
 ---@param callback fun(targets: table[])
 function M.list_targets_by_label(namespace, label_selector, callback)
-  local cmd = base_cmd()
-  cmd[#cmd + 1] = "get"
-  cmd[#cmd + 1] = "pods"
-  cmd[#cmd + 1] = "-n"
-  cmd[#cmd + 1] = namespace
-  cmd[#cmd + 1] = "-l"
-  cmd[#cmd + 1] = label_selector
-  cmd[#cmd + 1] = "-o"
-  cmd[#cmd + 1] = "json"
+  local cached = get_cached_targets(namespace, label_selector)
+  if cached then
+    vim.schedule(function()
+      callback(cached)
+    end)
+    return
+  end
 
+  local cmd = M.build_pod_list_cmd(namespace, label_selector)
   local stdout_chunks = {}
 
   vim.fn.jobstart(cmd, {
@@ -291,8 +400,9 @@ function M.list_targets_by_label(namespace, label_selector, callback)
           callback({})
           return
         end
-        local json_str = table.concat(stdout_chunks, "\n")
-        callback(M.parse_pods_json(json_str, namespace))
+        local targets = M.parse_pods_lines(stdout_chunks, namespace)
+        set_cached_targets(namespace, label_selector, targets)
+        callback(targets)
       end)
     end,
   })

@@ -3,6 +3,7 @@ local M = {}
 ---@class docklog.K8sConfig
 ---@field namespace? string
 ---@field kubeconfig? string
+---@field pod_cache_ttl_ms number
 
 ---@class docklog.DockerConfig
 ---@field host? string
@@ -46,6 +47,7 @@ M.values = {
   k8s = {
     namespace = nil,
     kubeconfig = nil,
+    pod_cache_ttl_ms = 30000,
   },
 
   docker = {
